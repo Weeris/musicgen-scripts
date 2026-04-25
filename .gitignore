@@ -17,9 +17,8 @@ build/
 .huggingface/
 
 # Output files (generated music)
-*.wav
-*.mp3
-*.flac
+samples/*.wav
+samples/*.mp3
 output/
 
 # OS
