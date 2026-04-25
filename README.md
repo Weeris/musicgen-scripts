@@ -1,5 +1,7 @@
 # 🎵 MusicGen Scripts
 
+**🔗 https://github.com/Weeris/musicgen-scripts**
+
 AI music generation using Meta's **MusicGen** — generate royalty-free background music locally on Apple Silicon Mac (or any machine with Python).
 
 > No GPU needed — runs on CPU (with MPS fallback on Apple Silicon). Free forever, MIT licensed.

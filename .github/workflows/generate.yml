@@ -1,0 +1,81 @@
+name: Generate Music
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Music prompt (e.g. "slow piano, calm, peaceful")'
+        required: true
+        default: 'slow fingerstyle guitar, gentle, nostalgic, solo acoustic, peaceful'
+      duration:
+        description: 'Duration in seconds'
+        required: false
+        default: '60'
+      model:
+        description: 'MusicGen model (small/medium/large)'
+        required: false
+        default: 'small'
+
+jobs:
+  generate:
+    runs-on: linux.x86_64
+    container: python:3.11-slim
+
+    steps:
+      - name: Install dependencies
+        run: |
+          pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers scipy numpy
+
+      - name: Generate music
+        run: |
+          python3 - <<'EOF'
+          import torch
+          from scipy.io import wavfile
+          import numpy as np
+          import os
+
+          from transformers import MusicgenForConditionalGeneration, MusicgenProcessor
+
+          PROMPT = "${{ github.event.inputs.prompt }}"
+          DURATION = int("${{ github.event.inputs.duration }}")
+          MODEL = "${{ github.event.inputs.model }}"
+
+          MODEL_MAP = {
+            "small": "facebook/musicgen-small",
+            "medium": "facebook/musicgen-medium",
+            "large": "facebook/musicgen-large",
+          }
+          MODEL_NAME = MODEL_MAP.get(MODEL, MODEL_MAP["small"])
+
+          print(f"Generating: {PROMPT}")
+          print(f"Duration: {DURATION}s, Model: {MODEL_NAME}")
+
+          model = MusicgenForConditionalGeneration.from_pretrained(MODEL_NAME)
+          processor = MusicgenProcessor.from_pretrained(MODEL_NAME)
+
+          inputs = processor(text=[PROMPT], padding=True, return_tensors="pt")
+          gen_tokens = DURATION * 50
+
+          with torch.no_grad():
+              audio = model.generate(**inputs, do_sample=True, guidance_scale=3.0, max_new_tokens=gen_tokens)
+
+          audio_np = audio[0].cpu().numpy().T
+          max_val = np.abs(audio_np).max()
+          if max_val > 0.95:
+              audio_np = audio_np / max_val * 0.95
+
+          safe_name = PROMPT.split(",")[0].replace(" ", "_")[:30]
+          out_path = f"{safe_name}_{DURATION}s.wav"
+          wavfile.write(out_path, rate=32000, data=audio_np.astype(np.float32))
+          print(f"Saved: {out_path}")
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-music
+          path: "*.wav"
+
+      - name: List files
+        run: ls -lh *.wav
