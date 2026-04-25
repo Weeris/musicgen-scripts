@@ -37,7 +37,7 @@ def generate_clip(model, processor, prompt, duration_sec, device):
     """Generate a single audio clip."""
     inputs = processor(text=[prompt], padding=True, return_tensors="pt")
     inputs = {k: v.to(device) for k, v in inputs.items()}
-    gen_tokens = duration_sec * 50  # ~50 tokens/sec at 32kHz
+    gen_tokens = min(duration_sec * 50, 1500)  # MusicGen small max is 2048, use 1500 for safety
 
     with torch.no_grad():
         audio_values = model.generate(
