@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# Model caches (download automatically)
+.cache/
+.huggingface/
+
+# Output files (generated music)
+*.wav
+*.mp3
+*.flac
+output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
